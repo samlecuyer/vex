@@ -1,0 +1,10 @@
+[package]
+name = "vex"
+version = "0.1.0"
+authors = ["Sam L'ecuyer <sam@cateches.is>"]
+license = "BSD-2-Clause"
+
+[dependencies]
+rustbox = "0.8.0"
+getopts = "0.2"
+unicode-segmentation = "0.1.0"
