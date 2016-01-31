@@ -1,32 +1,37 @@
 pub use editor::state::State;
+pub use editor::command::{Command, Span, Motion, Line, Column};
 
 // column, line
-type Coord = (isize, isize);
+type Coord = (usize, usize);
+type Range = (Coord, Coord);
 
-// enum Yank {
-// 	YankOnly, YankDel
-// }
+#[test]
+fn compare_coord() {
+	let a = (0, 5);
+	let b = (10, 6);
+	assert!(b > a);
+
+	let a = (0, 6);
+	let b = (10, 6);
+	assert!(b > a);
+
+	let a = (10, 6);
+	let b = (10, 6);
+	assert!(b == a);
+
+	let a = (25, 6);
+	let b = (10, 6);
+	assert!(b < a);
+}
+
+enum Yank {
+	YankOnly, YankDel
+}
 
 enum Direction {
-    Up,
-    Down,
+    Up, Down, //Left, Right,
 }
 
+mod command;
 mod state;
 mod buffer;
-
-// fn umin(a: usize, b: usize) -> usize {
-// 	if a < b { a } else { b }
-// }
-
-// fn umax(a: usize, b: usize) -> usize {
-// 	if a > b { a } else { b }
-// }
-
-fn imin(a: isize, b: isize) -> isize {
-	if a < b { a } else { b }
-}
-
-fn imax(a: isize, b: isize) -> isize {
-	if a > b { a } else { b }
-}
