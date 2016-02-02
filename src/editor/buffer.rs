@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 
 use super::{Coord, Direction, Range, Yank};
 
-use editor::command::{Command, Span, Motion, Line, Column, goto};
+use editor::command::{Command, Span, Motion, Line, Column};
 use std::cmp;
 
 use self::unicode_segmentation::UnicodeSegmentation;
@@ -302,11 +302,11 @@ fn basic_column_nav() {
     let mut buf = Buffer::new_empty(80, 24);
     buf.lines.get_mut(0).unwrap().push_str(" hello world");
 
-    let fwd   = goto(Span::Exclusive, Column::Right(1), Line::Current);
-    let back  = goto(Span::Exclusive, Column::Left(1), Line::Current);
-    let begin = goto(Span::Exclusive, Column::Begin, Line::Current);
-    let end   = goto(Span::Exclusive, Column::End, Line::Current);
-    let zero  = goto(Span::Exclusive, Column::Specific(0), Line::Current);
+    let fwd   = Command::goto(Span::Exclusive, Column::Right(1), Line::Current);
+    let back  = Command::goto(Span::Exclusive, Column::Left(1), Line::Current);
+    let begin = Command::goto(Span::Exclusive, Column::Begin, Line::Current);
+    let end   = Command::goto(Span::Exclusive, Column::End, Line::Current);
+    let zero  = Command::goto(Span::Exclusive, Column::Specific(0), Line::Current);
 
     buf.do_cmd(1, &fwd);
     assert_eq!(buf.point, (1, 0));
@@ -337,11 +337,11 @@ fn basic_line_nav() {
         buf.lines.push_back(line);
     }
     // assert!(false, "should write tests for this");
-    let down   = goto(Span::Linewise, Column::Current, Line::Down(1));
-    let up     = goto(Span::Linewise, Column::Current, Line::Up(1));
-    let first  = goto(Span::Linewise, Column::Current, Line::Specific(0));
-    let fourth = goto(Span::Linewise, Column::Current, Line::Specific(3));
-    let last   = goto(Span::Linewise, Column::Current, Line::Last);
+    let down   = Command::goto(Span::Linewise, Column::Current, Line::Down(1));
+    let up     = Command::goto(Span::Linewise, Column::Current, Line::Up(1));
+    let first  = Command::goto(Span::Linewise, Column::Current, Line::Specific(0));
+    let fourth = Command::goto(Span::Linewise, Column::Current, Line::Specific(3));
+    let last   = Command::goto(Span::Linewise, Column::Current, Line::Last);
 
     buf.do_cmd(1, &down);
     assert_eq!(buf.point, (0, 1));

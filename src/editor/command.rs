@@ -17,6 +17,9 @@ enum SkipThing {
 	Word, Sentence, Whitespace,
 }
 
+// TODO; what goes here
+struct Builder;
+
 #[derive(Debug)] 
 pub enum Line {
     Current,
@@ -37,15 +40,35 @@ pub enum Motion {
     Scroll(Line),
 }
 
+pub enum Operator {
+	Delete,
+	Insert,
+}
+
+pub enum Action {
+	Operator(Operator),
+	Motion(Motion),
+}
+
 pub struct Command {
+	pub count: usize,
     pub span: Span,
     pub motion: Motion,
 }
 
-pub fn goto(s: Span, c: Column, l: Line) -> Command {
-    Command{ span: s, motion: Motion::Goto(c, l) }
+impl Command {
+    pub fn goto(s: Span, c: Column, l: Line) -> Command {
+	    Command{count: 1, span: s, motion: Motion::Goto(c, l) }
+	}
+
+	pub fn scroll(l: Line) -> Command {
+	    Command{count: 1, span: Span::Linewise, motion: Motion::Scroll(l) }
+	}
 }
 
-pub fn scroll(l: Line) -> Command {
-    Command{ span: Span::Linewise, motion: Motion::Scroll(l) }
+impl Builder {
+    pub fn new() -> Builder {
+        Builder
+    }
 }
+

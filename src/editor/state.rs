@@ -10,7 +10,6 @@ use std::cmp;
 use editor::buffer::Buffer;
 use super::{Direction};
 use super::{Command, Span, Motion, Line, Column};
-use editor::command::{goto, scroll};
 
 use self::rustbox::{Color, RustBox, Key, Event};
 
@@ -96,68 +95,68 @@ impl State {
     pub fn get_motion(&self, key: Key) -> Option<Command> {
         match key {
             Key::Ctrl('h') | Key::Char('h') | Key::Left  => { 
-                Some(goto(Span::Exclusive, Column::Left(1), Line::Current))
+                Some(Command::goto(Span::Exclusive, Column::Left(1), Line::Current))
             }
             Key::Ctrl('j') | Key::Char('j') | Key::Down  => { 
-                Some(goto(Span::Linewise, Column::Current, Line::Down(1)))
+                Some(Command::goto(Span::Linewise, Column::Current, Line::Down(1)))
             }
             Key::Ctrl('p') | Key::Char('k') | Key::Up  => { 
-                Some(goto(Span::Linewise, Column::Current, Line::Up(1)))
+                Some(Command::goto(Span::Linewise, Column::Current, Line::Up(1)))
             }
             Key::Char(' ') | Key::Char('l') | Key::Right  => { 
-                Some(goto(Span::Exclusive, Column::Right(1), Line::Current))
+                Some(Command::goto(Span::Exclusive, Column::Right(1), Line::Current))
             }
             Key::Char('0')  => {
-                Some(goto(Span::Exclusive, Column::Specific(0), Line::Current))
+                Some(Command::goto(Span::Exclusive, Column::Specific(0), Line::Current))
             }
             Key::Char('^')  => {
-                Some(goto(Span::Exclusive, Column::Begin, Line::Current))
+                Some(Command::goto(Span::Exclusive, Column::Begin, Line::Current))
             }
             Key::Char('$')  => { 
-                Some(goto(Span::Exclusive, Column::End, Line::Current))
+                Some(Command::goto(Span::Exclusive, Column::End, Line::Current))
             }
             Key::Char('G')  => { 
-                Some(goto(Span::Linewise, Column::Current, Line::Last))
+                Some(Command::goto(Span::Linewise, Column::Current, Line::Last))
             }
             Key::Char('+') | Key::Char('m') => { 
-                Some(goto(Span::Exclusive, Column::Begin, Line::Down(1)))
+                Some(Command::goto(Span::Exclusive, Column::Begin, Line::Down(1)))
             }
             Key::Char('-') => { 
-                Some(goto(Span::Exclusive, Column::Begin, Line::Up(1)))
+                Some(Command::goto(Span::Exclusive, Column::Begin, Line::Up(1)))
             }
             Key::Ctrl('b') => {
                 // what an awful way to do this.
                 let lines = self.active().unwrap().window().1;
                 let count = 1; // TODO: actually use [count]
                 let relative = (count * (lines - 2));
-                Some(scroll(Line::Up(relative)))
+                Some(Command::scroll(Line::Up(relative)))
             }
             Key::Ctrl('f') => {
                 // what an awful way to do this.
                 let lines = self.active().unwrap().window().1;
                 let count = 1; // TODO: actually use [count]
                 let relative = (count * (lines - 2));
-                Some(scroll(Line::Down(relative)))
+                Some(Command::scroll(Line::Down(relative)))
             }
             Key::Ctrl('d') => {
                 // what an awful way to do this.
                 let lines = self.active().unwrap().window().1;
                 let count = 1; // TODO: actually use [count]
                 let relative = (count * (lines / 2));
-                Some(scroll(Line::Down(relative)))
+                Some(Command::scroll(Line::Down(relative)))
             }
             Key::Ctrl('u') => {
                 // what an awful way to do this.
                 let lines = self.active().unwrap().window().1;
                 let count = 1; // TODO: actually use [count]
                 let relative = (count * (lines / 2));
-                Some(scroll(Line::Up(relative)))
+                Some(Command::scroll(Line::Up(relative)))
             }
             Key::Ctrl('e') => {
-                Some(scroll(Line::Down(1)))
+                Some(Command::scroll(Line::Down(1)))
             }
             Key::Ctrl('y') => {
-                Some(scroll(Line::Up(1)))
+                Some(Command::scroll(Line::Up(1)))
             }
             _ => None
         }
