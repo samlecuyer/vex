@@ -33,7 +33,7 @@ pub struct State {
 
 impl State {
     pub fn new(w: usize, h: usize) -> State {
-        State{
+        State {
             mode: Mode::Normal,
             width: w,
             height: h,

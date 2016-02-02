@@ -32,6 +32,7 @@ enum Direction {
     Up, Down, //Left, Right,
 }
 
+mod keyboard;
 mod command;
 mod state;
 mod buffer;

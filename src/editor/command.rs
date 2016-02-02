@@ -1,3 +1,4 @@
+use editor::keyboard::{Key};
 
 // A motion can vary a column in the following ways:
 // * not varying it
@@ -17,9 +18,6 @@ enum SkipThing {
 	Word, Sentence, Whitespace,
 }
 
-// TODO; what goes here
-struct Builder;
-
 #[derive(Debug)] 
 pub enum Line {
     Current,
@@ -28,6 +26,7 @@ pub enum Line {
     Last
 }
 
+#[derive(Debug)]
 pub enum Span {
     Inclusive,
     Exclusive,
@@ -50,6 +49,7 @@ pub enum Action {
 	Motion(Motion),
 }
 
+#[derive(Debug)]
 pub struct Command {
 	pub count: usize,
     pub span: Span,
@@ -66,9 +66,34 @@ impl Command {
 	}
 }
 
+#[derive(Debug)]
+enum BuilderResult {
+    Invalid,
+    Pending,
+    Command(Command),
+}
+// TODO; what goes here
+struct Builder;
+
 impl Builder {
     pub fn new() -> Builder {
         Builder
     }
+    pub fn handle_key(&mut self, key: Key) -> BuilderResult {
+        BuilderResult::Invalid
+    }
+}
+
+#[test]
+fn builder_enter_count() {
+    let mut builder = Builder::new();
+    let cmd = builder.handle_key(Key::Char('1'));
+
+    match cmd {
+        BuilderResult::Pending => assert!(true),
+        _ => assert!(false, "should be pending"),
+    }
+    // assert_eq!(builder.count, 1);
+    
 }
 
