@@ -26,6 +26,7 @@ pub struct Buffer {
 }
 
 impl Buffer {
+    /// Constructs a new 
 	pub fn new(name: &Path, width: usize, height: usize) -> Buffer {
 		Buffer {
 			name: name.to_path_buf(),
@@ -80,11 +81,23 @@ impl Buffer {
         self.point.0 += 1;
     }
     pub fn newline(&mut self) {
-        let (col, line)  = self.point;
-        let text = self.lines.get(line).unwrap().to_owned();
-        let (_, b) = text.split_at(col);
-        self.lines.get_mut(line).unwrap().truncate(col);
-        self.lines.insert(line + 1, b.to_owned());
+        let (c, l)  = self.point;
+        // this shouldn't panic because we bounds check line
+        let text = self.lines.get(l).unwrap().to_owned();
+        // there are a couple edge cases to speed this up:
+        if c == 0 {
+            // we might be at the beginning of a line
+            self.lines.insert(l, String::new());
+        } else if c == text.len() - 1 {
+            // we might be at the end of the line
+            self.lines.insert(l + 1, String::new());
+        } else {
+            // otherwise just split this line
+            // let text = text.to_owned();
+            let (_, b) = text.split_at(c);
+            self.lines.get_mut(l).unwrap().truncate(c);
+            self.lines.insert(l + 1, b.to_owned());
+        }
         self.point.1 += 1;
         self.point.0 = 0;
     }
@@ -94,20 +107,19 @@ impl Buffer {
     }
 
     // Navigation
+    // TODO: graphemes
     pub fn left(&mut self, c: usize) {
-		let curr = self.point.0;
-		self.point.0 = curr.saturating_sub(c);
+		let col = self.point.0.saturating_sub(c);
+        self.point.0 = col;
     }
+    // TODO: graphemes
     pub fn right(&mut self, c: usize) {
-    	let line : &str = &self.lines.get(self.point.1).unwrap();
-    	let graphemes = UnicodeSegmentation::graphemes(line, true);
-    	let width = graphemes.count() - 1;
-        let next = self.point.0 + c;
-		self.point.0 = cmp::min(width, next);
+        let (_, l) = self.point;
+    	let line = self.lines.get(l).unwrap();
+        let len = line.len();
+        let col = self.point.0 + c;
+        self.point.0 = cmp::min(len, col);
     }
-    // the rules are that offset can't be negative
-    // point.1 can never be less than offset
-    // point.1 can never be more than offset + heights
 
     pub fn begin(&mut self) {
     	let line = self.lines.get(self.point.1).unwrap();
@@ -235,26 +247,18 @@ impl Buffer {
                             self.point.0 = i;
                         }
                     }
-                    Column::Left(i) => {
-                        let col = self.point.0.saturating_sub(i);
-                        self.point.0 = col;
-                    }
-                    Column::Right(i) => {
-                        let line = self.lines.get(l).unwrap();
-                        let len = line.len();
-                        let col = self.point.0 + i;
-                        self.point.0 = cmp::min(len, col);
-                    }
+                    Column::Left(i) => { self.left(i); }
+                    Column::Right(i) => { self.right(i); }
                     Column::Begin => {
                         let line = self.lines.get(self.point.1).unwrap();
                         let idx = line.find(|c: char| !c.is_whitespace()).unwrap_or(0);
-                        self.point.0 = idx ;
+                        self.point.0 = idx;
                     }
                     Column::End => {
                         let line = self.lines.get(l).unwrap();
                         self.point.0 = line.len() - 1;
                     }
-                }
+                };
                 // println!("{:?} {:?}", col, line);
                 self.window_to_point();
             }

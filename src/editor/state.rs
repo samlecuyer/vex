@@ -15,7 +15,9 @@ use editor::command::{goto, scroll};
 use self::rustbox::{Color, RustBox, Key, Event};
 
 enum Mode {
-    Command,
+    // we treat `:` as different from normal
+    Colon,
+    Normal,
     Insert,
 }
 
@@ -33,7 +35,7 @@ pub struct State {
 impl State {
     pub fn new(w: usize, h: usize) -> State {
         State{
-            mode: Mode::Command,
+            mode: Mode::Normal,
             width: w,
             height: h,
             buf_idx: 0,
@@ -91,204 +93,145 @@ impl State {
         }
     }
 
-    pub fn get_motion(&self, key: Key) -> Command {
-        match self.mode {
-            Mode::Command => {
-                match key {
-                    // navigation
-                    // TODO: [count]
-                    Key::Ctrl('h') | Key::Char('h') | Key::Left  => { 
-                        goto(Span::Exclusive, Column::Left(1), Line::Current)
-                    }
-                    Key::Ctrl('j') | Key::Char('j') | Key::Down  => { 
-                        goto(Span::Linewise, Column::Current, Line::Down(1))
-                    }
-                    Key::Ctrl('p') | Key::Char('k') | Key::Up  => { 
-                        goto(Span::Linewise, Column::Current, Line::Up(1))
-                    }
-                    Key::Char(' ') | Key::Char('l') | Key::Right  => { 
-                        goto(Span::Exclusive, Column::Right(1), Line::Current)
-                    }
-                    Key::Char('0')  => {
-                        goto(Span::Exclusive, Column::Specific(0), Line::Current)
-                    }
-                    Key::Char('^')  => {
-                        goto(Span::Exclusive, Column::Begin, Line::Current)
-                    }
-                    Key::Char('$')  => { 
-                        goto(Span::Exclusive, Column::End, Line::Current)
-                    }
-                    Key::Char('G')  => { 
-                        goto(Span::Linewise, Column::Current, Line::Last)
-                    }
-                    Key::Char('+') | Key::Char('m') => { 
-                        goto(Span::Exclusive, Column::Begin, Line::Down(1))
-                    }
-                    Key::Char('-') => { 
-                        goto(Span::Exclusive, Column::Begin, Line::Up(1))
-                    }
-                    Key::Ctrl('b') => {
-                        // what an awful way to do this.
-                        let lines = self.active().unwrap().window().1;
-                        let count = 1; // TODO: actually use [count]
-                        let relative = (count * (lines - 2)) - 1;
-                        scroll(Line::Up(relative))
-                    }
-                    Key::Ctrl('f') => {
-                        // what an awful way to do this.
-                        let lines = self.active().unwrap().window().1;
-                        let count = 1; // TODO: actually use [count]
-                        let relative = (count * (lines - 2)) - 1;
-                        scroll(Line::Down(relative))
-                    }
-                    Key::Ctrl('d') => {
-                        // what an awful way to do this.
-                        let lines = self.active().unwrap().window().1;
-                        let count = 1; // TODO: actually use [count]
-                        let relative = (count * (lines / 2)) - 1;
-                        scroll(Line::Down(relative))
-                    }
-                    Key::Ctrl('u') => {
-                        // what an awful way to do this.
-                        let lines = self.active().unwrap().window().1;
-                        let count = 1; // TODO: actually use [count]
-                        let relative = (count * (lines / 2)) - 1;
-                        scroll(Line::Up(relative))
-                    }
-                    Key::Ctrl('e') => {
-                        scroll(Line::Down(1))
-                    }
-                    Key::Ctrl('y') => {
-                        scroll(Line::Up(1))
-                    }
-                    _ => panic!("unimplemented")
-                }
+    pub fn get_motion(&self, key: Key) -> Option<Command> {
+        match key {
+            Key::Ctrl('h') | Key::Char('h') | Key::Left  => { 
+                Some(goto(Span::Exclusive, Column::Left(1), Line::Current))
             }
-            Mode::Insert => {
-                unreachable!()
+            Key::Ctrl('j') | Key::Char('j') | Key::Down  => { 
+                Some(goto(Span::Linewise, Column::Current, Line::Down(1)))
+            }
+            Key::Ctrl('p') | Key::Char('k') | Key::Up  => { 
+                Some(goto(Span::Linewise, Column::Current, Line::Up(1)))
+            }
+            Key::Char(' ') | Key::Char('l') | Key::Right  => { 
+                Some(goto(Span::Exclusive, Column::Right(1), Line::Current))
+            }
+            Key::Char('0')  => {
+                Some(goto(Span::Exclusive, Column::Specific(0), Line::Current))
+            }
+            Key::Char('^')  => {
+                Some(goto(Span::Exclusive, Column::Begin, Line::Current))
+            }
+            Key::Char('$')  => { 
+                Some(goto(Span::Exclusive, Column::End, Line::Current))
+            }
+            Key::Char('G')  => { 
+                Some(goto(Span::Linewise, Column::Current, Line::Last))
+            }
+            Key::Char('+') | Key::Char('m') => { 
+                Some(goto(Span::Exclusive, Column::Begin, Line::Down(1)))
+            }
+            Key::Char('-') => { 
+                Some(goto(Span::Exclusive, Column::Begin, Line::Up(1)))
+            }
+            Key::Ctrl('b') => {
+                // what an awful way to do this.
+                let lines = self.active().unwrap().window().1;
+                let count = 1; // TODO: actually use [count]
+                let relative = (count * (lines - 2));
+                Some(scroll(Line::Up(relative)))
+            }
+            Key::Ctrl('f') => {
+                // what an awful way to do this.
+                let lines = self.active().unwrap().window().1;
+                let count = 1; // TODO: actually use [count]
+                let relative = (count * (lines - 2));
+                Some(scroll(Line::Down(relative)))
+            }
+            Key::Ctrl('d') => {
+                // what an awful way to do this.
+                let lines = self.active().unwrap().window().1;
+                let count = 1; // TODO: actually use [count]
+                let relative = (count * (lines / 2));
+                Some(scroll(Line::Down(relative)))
+            }
+            Key::Ctrl('u') => {
+                // what an awful way to do this.
+                let lines = self.active().unwrap().window().1;
+                let count = 1; // TODO: actually use [count]
+                let relative = (count * (lines / 2));
+                Some(scroll(Line::Up(relative)))
+            }
+            Key::Ctrl('e') => {
+                Some(scroll(Line::Down(1)))
+            }
+            Key::Ctrl('y') => {
+                Some(scroll(Line::Up(1)))
+            }
+            _ => None
+        }
+    }
+
+    fn do_cmd_key(&mut self, key: Key) {
+        match key {
+            Key::Char(':') => {
+                self.mode = Mode::Colon;
+            }
+            Key::Char('i') => {
+                self.mode = Mode::Insert;
+            }
+            Key::Char('a') => {
+                self.active_mut().unwrap().right(1);
+                self.mode = Mode::Insert;
+            }
+            Key::Char('O') => {
+                self.mode = Mode::Insert;
+                let mut active = self.active_mut().unwrap();
+                active.end();
+                active.newline();
+            }
+            Key::Char('o') => {
+                self.mode = Mode::Insert;
+                let mut active = self.active_mut().unwrap();
+                active.end();
+                active.newline();
+            }
+            _ => match self.get_motion(key) {
+                Some(cmd) => {
+                    self.active_mut().unwrap().do_cmd(1, &cmd);
+                }
+                None => {}
             }
         }
     }
 
-    pub fn handle_key(&mut self, key: Key) {
-        match self.mode {
-            Mode::Command => {
-                match key {
-                    // TODO: we should have a separate `ex` parsing function
-                    Key::Enter if !self.colon.is_empty() => {
-                        match self.colon.as_ref() {
-                            ":w" | ":write" => {
-                                let buffer = self.active().unwrap();
-                                self.save_buffer(buffer);
-                            }
-                            ":q" | ":quit" => {
-                                // TODO: there should be a callback
-                                // so the editor can clean up
-                                self.buffers.remove(self.buf_idx);
-                                if self.buf_idx >= self.buffers.len() {
-                                    self.buf_idx = 0;
-                                }
-                            }
-                            _ => { }
-                        }
-                        self.colon.clear();
-                    }
-                    Key::Char(c) if !self.colon.is_empty() => {
-                        self.colon.push(c);
-                    }
-                    Key::Char(':') => {
-                        self.colon.push(':');
-                    }
-                    Key::Char('0') if self.count.is_empty() => {
-                        
-                    }
-                    Key::Char(c) if c.is_digit(10) => {
-                        self.count.push(c);
-                    }
-                    Key::Ctrl('b') => { 
-                        let cnt = self.get_count();
-                        self.active_mut().unwrap().page_back(cnt);
-                    }
-                    Key::Ctrl('d') => {
-                        let cnt = self.get_count();
-                        self.active_mut().unwrap().scroll(cnt, Direction::Down);
-                    }
-                    Key::Ctrl('e') => { 
-                        // let cnt = self.get_count();
-                        self.active_mut().unwrap().scroll(1, Direction::Down);
-                    }
-                    Key::Ctrl('f') => {
-                        let cnt = self.get_count();
-                        self.active_mut().unwrap().page_fwd(cnt); 
-                    }
-                    Key::Ctrl('m') | Key::Char('+') => { 
-                        // let cnt = self.get_count();
-                        let active = self.active_mut().unwrap();
-                        active.next(1);
-                        active.begin();
-                    }
-                    Key::Ctrl('n') => {
-                        let len = self.buffers.len();
-                        self.buf_idx = (self.buf_idx + 1) % len;
-                    }
-                    Key::Ctrl('u') => {
-                        let cnt = self.get_count();
-                        self.active_mut().unwrap().scroll(cnt, Direction::Up); 
-                    }
-                    Key::Ctrl('y') => { 
-                        // let cnt = self.get_count();
-                        self.active_mut().unwrap().scroll(1, Direction::Up);
-                    }
-                    Key::Esc => {
-                        self.colon.clear(); 
-                        self.status.clear();
-                    }
-                    Key::Char('^') => {
-                        self.active_mut().unwrap().begin(); 
-                    }
-                    Key::Char('$') => {
-                        let cnt = self.get_count();
-                        self.active_mut().unwrap().next(cnt - 1);
-                        self.active_mut().unwrap().end(); 
-                    }
-                    Key::Char('i') => {
-                        self.mode = Mode::Insert;
-                    }
-                    Key::Char('d') => {
-                        let mut buf = self.active_mut().unwrap();
-                        let (_, l) = buf.point();
-                        buf.delete_line(l);
-                    }
-                    Key::Char('D') => {
-                        
-                    }
-                    Key::Ctrl('h') | Key::Char('h') | Key::Left  => { self.active_mut().unwrap().left(1); }
-                    Key::Ctrl('j') | Key::Char('j') | Key::Down  => { self.active_mut().unwrap().next(1); }
-                    Key::Ctrl('p') | Key::Char('k') | Key::Up => { self.active_mut().unwrap().prev(1); }
-                    Key::Char(' ') | Key::Char('l') | Key::Right => { self.active_mut().unwrap().right(1); }
-                    _ => { }
-                };
-            },
-            Mode::Insert => {
-                match key {
-                    Key::Esc => {
-                        self.mode = Mode::Command;
-                    }
-                    Key::Enter => {
-                        let mut buf = self.active_mut().unwrap();
-                        buf.newline();
-                    }
-                    Key::Char(k) => {
-                        let mut buf = self.active_mut().unwrap();
-                        buf.insert(k);
-                    }
-                    Key::Ctrl('h') | Key::Left  => { self.active_mut().unwrap().left(1); }
-                    Key::Down  => { self.active_mut().unwrap().next(1); }
-                    Key::Up    => { self.active_mut().unwrap().prev(1); }
-                    Key::Right => { self.active_mut().unwrap().right(1); }
-                    _ => { }
-                };
+    fn do_colon_key(&mut self, key: Key) {
+        match key {
+            Key::Char(c) => {
+                self.colon.push(c);
             }
+            Key::Esc => {
+                self.colon.clear();
+                self.mode = Mode::Normal;
+            }
+            Key::Enter => {
+                // TODO: actually parse the line
+                if self.colon == "q" {
+                    self.buffers.remove(self.buf_idx);
+                    if self.buf_idx >= self.buffers.len() {
+                        self.buf_idx = 0;
+                    }
+                }
+                self.colon.clear();
+                self.mode = Mode::Normal;
+            }
+            _ => {}
+        }
+    }
+
+    fn do_insert_key(&mut self, key: Key) {
+        match key {
+            Key::Esc => {
+                self.mode = Mode::Normal;
+            }
+            Key::Enter => {
+                self.active_mut().unwrap().newline();
+            }
+            Key::Char(c) => {
+                self.active_mut().unwrap().insert(c);
+            }
+            _ => {}
         }
     }
 
@@ -298,17 +241,28 @@ impl State {
         }
         while self.buffers.len() > 0 {
             rustbox.draw(&self);
-            match rustbox.poll_event(false) {
+            match rustbox.poll_event(true) {
                 Ok(Event::KeyEvent(key)) => {
-                    // self.handle_key(key)
-                    let cmd = self.get_motion(key);
-                    self.active_mut().unwrap().do_cmd(1, &cmd);
+                    match self.mode {
+                        Mode::Normal => {
+                            self.do_cmd_key(key)
+                        }
+                        Mode::Colon => {
+                            self.do_colon_key(key)
+                        }
+                        Mode::Insert => {
+                            self.status = format!("{:?}", key);
+                            self.do_insert_key(key)
+                        }
+                    }
                 },
                 Ok(Event::ResizeEvent(w, h)) => {
                     self.resize(w as usize, h as usize);
                 },
                 Err(e) => panic!("{}", e),
-                _ => { }
+                other => {
+                    self.status = format!("{:?}", other);
+                }
             }
         }
     }
@@ -360,16 +314,23 @@ impl VexDisplay for rustbox::RustBox {
             idx += 1 + name.len();
         }
     
-        if state.colon.is_empty() {
-            let len = active.lines.len();
-            let status_line = format!("{} {}L", active.name(), len);
-            self.print(0, self.height() - 1, rustbox::RB_NORMAL, Color::Default, Color::Default, &status_line);
-        } else {
-            self.print(0, self.height() - 1, rustbox::RB_NORMAL, Color::Default, Color::Default, &state.colon);
+        match state.mode {
+            Mode::Colon => {
+                let last_line = self.height() - 1;
+                self.print(0, last_line, rustbox::RB_BOLD, Color::Default, Color::Default, ":");
+                self.print(1, last_line, rustbox::RB_NORMAL, Color::Default, Color::Default, &state.colon);
+                self.set_cursor(state.colon.len() as isize + 1, last_line as isize);
+            }
+            _ =>  {
+                let len = active.lines.len();
+                let status_line = format!("{} {}L {}", active.name(), len, state.status);
+                self.print(0, self.height() - 1, rustbox::RB_NORMAL, Color::Default, Color::Default, &status_line);
+
+                let x_ = active.lines.get(y).unwrap().len();
+                let x__ = cmp::min(x_, x);
+                self.set_cursor(x__ as isize, (y - offset) as isize + 1);
+            }
         }
-        let x_ = active.lines.get(y).unwrap().len();
-        let x__ = cmp::min(x_.saturating_sub(1), x);
-        self.set_cursor(x__ as isize, (y - offset) as isize + 1);
 
         self.present();
     }
