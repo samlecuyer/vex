@@ -66,6 +66,14 @@ impl Command {
 	}
 }
 
+enum TextObject {
+	Char, Word, Sentence, Line, Paragraph,
+}
+enum Partial {
+	Object(TextObject),
+	Action(Action),
+}
+
 #[derive(Debug)]
 enum BuilderResult {
     Invalid,
@@ -99,10 +107,106 @@ impl Builder {
         		return BuilderResult::Pending;
         	}
         }
-        
+
+        match self.lookup_key(key) {
+            Some(partial) => {
+            	let cmd = self.build_cmd(partial);
+            	return BuilderResult::Command(cmd);
+            }
+            None => {
+            	return BuilderResult::Invalid;
+            }
+        }
       	BuilderResult::Invalid
     }
+
+    fn build_cmd(&mut self, partial: Partial) -> Command {
+        Command {
+        	count: self.count.unwrap_or(1),
+        	span: Span::Linewise,
+        	motion: match partial {
+        		Partial::Action(action) => match action {
+        		    Action::Motion(motion) => motion,
+        		    _ => panic!("{:?}", "oh no")
+        		},
+        		_ => {
+        			panic!("{:?}", "oh no");
+        		}
+        	}
+        }
+    }
+
+    fn lookup_key(&self, key: Key) -> Option<Partial> {
+    	match key {
+            Key::Ctrl('h') | Key::Char('h') | Key::Left  => { 
+                Some(Partial::Action(Action::Motion(Motion::Goto(Column::Left(1), Line::Current))))
+            }
+            // Key::Ctrl('j') | Key::Char('j') | Key::Down  => { 
+            //     Some(Command::goto(Span::Linewise, Column::Current, Line::Down(1)))
+            // }
+            // Key::Ctrl('p') | Key::Char('k') | Key::Up  => { 
+            //     Some(Command::goto(Span::Linewise, Column::Current, Line::Up(1)))
+            // }
+            // Key::Char(' ') | Key::Char('l') | Key::Right  => { 
+            //     Some(Command::goto(Span::Exclusive, Column::Right(1), Line::Current))
+            // }
+            // Key::Char('0')  => {
+            //     Some(Command::goto(Span::Exclusive, Column::Specific(0), Line::Current))
+            // }
+            // Key::Char('^')  => {
+            //     Some(Command::goto(Span::Exclusive, Column::Begin, Line::Current))
+            // }
+            // Key::Char('$')  => { 
+            //     Some(Command::goto(Span::Exclusive, Column::End, Line::Current))
+            // }
+            // Key::Char('G')  => { 
+            //     Some(Command::goto(Span::Linewise, Column::Current, Line::Last))
+            // }
+            // Key::Char('+') | Key::Char('m') => { 
+            //     Some(Command::goto(Span::Exclusive, Column::Begin, Line::Down(1)))
+            // }
+            // Key::Char('-') => { 
+            //     Some(Command::goto(Span::Exclusive, Column::Begin, Line::Up(1)))
+            // }
+            // Key::Ctrl('b') => {
+            //     // what an awful way to do this.
+            //     let lines = self.active().unwrap().window().1;
+            //     let count = 1; // TODO: actually use [count]
+            //     let relative = (count * (lines - 2));
+            //     Some(Command::scroll(Line::Up(relative)))
+            // }
+            // Key::Ctrl('f') => {
+            //     // what an awful way to do this.
+            //     let lines = self.active().unwrap().window().1;
+            //     let count = 1; // TODO: actually use [count]
+            //     let relative = (count * (lines - 2));
+            //     Some(Command::scroll(Line::Down(relative)))
+            // }
+            // Key::Ctrl('d') => {
+            //     // what an awful way to do this.
+            //     let lines = self.active().unwrap().window().1;
+            //     let count = 1; // TODO: actually use [count]
+            //     let relative = (count * (lines / 2));
+            //     Some(Command::scroll(Line::Down(relative)))
+            // }
+            // Key::Ctrl('u') => {
+            //     // what an awful way to do this.
+            //     let lines = self.active().unwrap().window().1;
+            //     let count = 1; // TODO: actually use [count]
+            //     let relative = (count * (lines / 2));
+            //     Some(Command::scroll(Line::Up(relative)))
+            // }
+            // Key::Ctrl('e') => {
+            //     Some(Command::scroll(Line::Down(1)))
+            // }
+            // Key::Ctrl('y') => {
+            //     Some(Command::scroll(Line::Up(1)))
+            // }
+            _ => None
+        }
+    }
 }
+
 
 #[test]
 fn builder_enter_count() {
