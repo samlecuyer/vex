@@ -72,15 +72,35 @@ enum BuilderResult {
     Pending,
     Command(Command),
 }
-// TODO; what goes here
-struct Builder;
+
+struct Builder {
+	// TODO; what goes here
+	count: Option<usize>,
+}
 
 impl Builder {
     pub fn new() -> Builder {
-        Builder
+        Builder {
+        	count: None
+        }
     }
     pub fn handle_key(&mut self, key: Key) -> BuilderResult {
-        BuilderResult::Invalid
+        if let Key::Char(c) = key {
+        	if c.is_digit(10) {
+        		let c = c.to_digit(10).unwrap() as usize;
+        		match self.count {
+        			None => {
+        				self.count = Some(c);
+        			}
+        			Some(n) => {
+        				self.count = Some(n * 10 + c);
+        			}
+        		};
+        		return BuilderResult::Pending;
+        	}
+        }
+        
+      	BuilderResult::Invalid
     }
 }
 
@@ -93,7 +113,12 @@ fn builder_enter_count() {
         BuilderResult::Pending => assert!(true),
         _ => assert!(false, "should be pending"),
     }
-    // assert_eq!(builder.count, 1);
-    
+
+    let cmd = builder.handle_key(Key::Char('2'));
+    match cmd {
+        BuilderResult::Pending => assert!(true),
+        _ => assert!(false, "should be pending"),
+    }
+    assert_eq!(builder.count, Some(12));
 }
 

@@ -240,7 +240,7 @@ impl State {
         }
         while self.buffers.len() > 0 {
             rustbox.draw(&self);
-            match rustbox.poll_event(true) {
+            match rustbox.poll_event(false) {
                 Ok(Event::KeyEvent(key)) => {
                     match self.mode {
                         Mode::Normal => {
