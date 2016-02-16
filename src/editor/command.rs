@@ -49,6 +49,24 @@ pub enum Action {
 	Motion(Motion),
 }
 
+pub enum Kind {
+	Char, Line(Anchor), Word(Anchor), Paragraph(Anchor)
+}
+pub enum Anchor {
+	Before, Start, End, After, Same,
+}
+
+pub struct TextObject {
+    pub kind: Kind,
+    pub offset: Offset
+}
+
+pub enum Offset {
+    Absolute(usize),
+    Backward(usize),
+    Forward(usize),
+}
+
 #[derive(Debug)]
 pub struct Command {
 	pub count: usize,
@@ -66,12 +84,12 @@ impl Command {
 	}
 }
 
-enum TextObject {
-	Char, Word, Sentence, Line, Paragraph,
-}
 enum Partial {
 	Object(TextObject),
 	Action(Action),
+	Offset(Offset),
+	Kind(Kind),
+	Anchor(Anchor),
 }
 
 #[derive(Debug)]
@@ -82,14 +100,23 @@ enum BuilderResult {
 }
 
 struct Builder {
-	// TODO; what goes here
 	count: Option<usize>,
+	offset: Option<Offset>,
+	object: Option<TextObject>,
+	action: Option<Action>,
+	anchor: Option<Anchor>,
+	kind: Option<Kind>,
 }
 
 impl Builder {
     pub fn new() -> Builder {
         Builder {
-        	count: None
+        	count: None,
+        	offset: None,
+        	object: None,
+        	action: None,
+        	anchor: None,
+        	kind: None,
         }
     }
     pub fn handle_key(&mut self, key: Key) -> BuilderResult {
@@ -110,8 +137,7 @@ impl Builder {
 
         match self.lookup_key(key) {
             Some(partial) => {
-            	let cmd = self.build_cmd(partial);
-            	return BuilderResult::Command(cmd);
+            	self.build_cmd(partial);
             }
             None => {
             	return BuilderResult::Invalid;
@@ -120,20 +146,14 @@ impl Builder {
       	BuilderResult::Invalid
     }
 
-    fn build_cmd(&mut self, partial: Partial) -> Command {
-        Command {
-        	count: self.count.unwrap_or(1),
-        	span: Span::Linewise,
-        	motion: match partial {
-        		Partial::Action(action) => match action {
-        		    Action::Motion(motion) => motion,
-        		    _ => panic!("{:?}", "oh no")
-        		},
-        		_ => {
-        			panic!("{:?}", "oh no");
-        		}
-        	}
-        }
+    fn build_cmd(&mut self, partial: Partial) {
+    	match partial {
+    	    Partial::Object(object) => self.object = Some(object),
+			Partial::Action(action) => self.action = Some(action),
+			Partial::Offset(offset) => self.offset = Some(offset),
+			Partial::Kind(kind)     => self.kind   = Some(kind),
+			Partial::Anchor(anchor) => self.anchor = Some(anchor),
+    	}
     }
 
     fn lookup_key(&self, key: Key) -> Option<Partial> {

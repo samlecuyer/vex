@@ -316,8 +316,8 @@ impl VexDisplay for rustbox::RustBox {
         match state.mode {
             Mode::Colon => {
                 let last_line = self.height() - 1;
-                self.print(0, last_line, rustbox::RB_BOLD, Color::Default, Color::Default, ":");
-                self.print(1, last_line, rustbox::RB_NORMAL, Color::Default, Color::Default, &state.colon);
+                self.print(0, last_line, rustbox::RB_NORMAL, Color::Blue, Color::Default, ":");
+                self.print(1, last_line, rustbox::RB_NORMAL, Color::Blue, Color::Default, &state.colon);
                 self.set_cursor(state.colon.len() as isize + 1, last_line as isize);
             }
             _ =>  {
