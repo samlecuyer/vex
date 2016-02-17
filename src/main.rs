@@ -8,7 +8,7 @@ use std::path::Path;
 
 use self::rustbox::{RustBox};
 
-use vex::editor::{State};
+use vex::vex_editor::{Editor};
 
 fn main() {
 	let args: Vec<String> = env::args().collect();
@@ -30,7 +30,7 @@ fn main() {
         Result::Err(e) => panic!("{}", e),
     };
 
-	let mut state = State::new(rustbox.width(), rustbox.height());
+	let mut state = Editor::new(rustbox.width(), rustbox.height());
 	for name in matches.free {
 		state.open(Path::new(&name));
 	}

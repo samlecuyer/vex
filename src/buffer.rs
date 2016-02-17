@@ -5,7 +5,7 @@ use self::gapbuffer::{GapBuffer, Items};
 
 use std::cmp::{Ordering, min};
 use std::iter::{FromIterator, IntoIterator};
-
+use std::convert::From;
 
 /// As described in
 /// http://pubs.opengroup.org/onlinepubs/9699919799/utilities/ex.html
@@ -15,7 +15,7 @@ enum BufferMode {
     Line,
 }
 
-struct Buffer {
+pub struct Buffer {
     cursor: usize,
     mode: BufferMode,
     buf: GapBuffer<u8>,
@@ -54,6 +54,22 @@ impl Buffer {
     }
 }
 
+// impl<P: AsRef<Path>> From<P> for Buffer {
+//     fn from(path: P) -> Buffer {
+//         match File::open(path) {
+//             Ok(file) => Buffer::from(file),
+//             Err(_) => Buffer::new()
+//         }
+//     }
+// }
+
+impl<R: Read> From<R> for Buffer {
+    fn from(mut reader: R) -> Buffer {
+        let mut b = reader.bytes().flat_map(|c| c);
+        Buffer::from_iter(b)
+    }
+}
+
 impl FromIterator<u8> for Buffer {
     fn from_iter<T>(iterator: T) -> Self where T: IntoIterator<Item=u8> {
         let mut buf = GapBuffer::from_iter(iterator);
@@ -66,7 +82,7 @@ impl FromIterator<u8> for Buffer {
 }
 
 // TODO: support BufRead rather than use a BufReader
-struct Bytes<'a> {
+pub struct Bytes<'a> {
     idx: usize,
     buf: &'a GapBuffer<u8>,
 }
@@ -87,7 +103,7 @@ impl<'a> Read for Bytes<'a> {
 }
 
 #[test]
-fn buffer_from_string() {
+fn buffer_from_string_iter() {
     let input = String::from("hello world.\n\nthis is a new line");
     let buffer = Buffer::from_iter(input.bytes());
 
