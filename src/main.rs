@@ -30,11 +30,15 @@ fn main() {
         Result::Err(e) => panic!("{}", e),
     };
 
-	let mut state = Editor::new(rustbox.width(), rustbox.height());
-	for name in matches.free {
-		state.open(Path::new(&name));
-	}
-	state.edit(&rustbox);
+	let mut editor = Editor::new(rustbox.width(), rustbox.height());
+    if matches.free.is_empty() {
+        editor.open_empty();
+    } else {
+        for name in matches.free {
+            editor.open(Path::new(&name));
+        }
+    }
+	editor.edit(&rustbox);
 }
 
 fn print_usage(program: &str, opts: Options) {

@@ -10,15 +10,24 @@ pub trait Render {
     fn render(&self, editor: &Editor);
 }
 
+pub enum Mode {
+    Normal,
+    Insert,
+}
+
 pub struct Editor {
+	mode: Mode,
 	height: usize,
 	width: usize,
+	pub top: usize,
 	pub bufs: Vec<Buffer>,
 }
 
 impl Editor {
     pub fn new(w: usize, h: usize) -> Editor {
     	Editor {
+    		mode: Mode::Normal,
+    		top: 0,
     		width: w,
     		height: h,
     		bufs: Vec::new()
@@ -33,26 +42,51 @@ impl Editor {
         self.bufs.push(buf);
     }
 
+    pub fn open_empty(&mut self) {
+        let mut buf = Buffer::new();
+        self.bufs.push(buf);
+    }
+
     pub fn edit<T>(&mut self, driver: &T) where T: Driver + Render {
-    	loop {
+    	while self.is_editing() {
     	    driver.render(&self);
     		match driver.poll_event() {
-    			EditorEvent::KeyEvent(Key::Ctrl('c')) => {
-    				// gotta have some way to exit
-	    	    	return;
-	    	    }
 	    	    EditorEvent::KeyEvent(key) => {
-
+	    	    	self.handle_key(key);
 	    	    }
 	    	    EditorEvent::Resize(w, h) => {
-	    	    	self.width = w;
-	    	    	self.height = h;
+	    	    	self.resize(w, h);
 	    	    }
 	    	    EditorEvent::Unsupported => {
-
+	    	    	// http://10x.engineer/
 	    	    },
 	    	}
     	}
+    }
+
+    fn handle_key(&mut self, key: Key) {
+    	match key {
+    	    Key::Ctrl('c') => {
+				self.bufs.remove(0);
+		    }
+		    Key::Char('j') => {
+		    	self.top += 1;
+		    }
+		    Key::Char('k') => {
+		    	self.top = self.top.saturating_sub(1);
+		    }
+		    _ => {}
+    	}
+    	
+    }
+
+    fn is_editing(&self) -> bool {
+    	self.bufs.len() > 0
+    }
+
+    fn resize(&mut self, w: usize, h: usize) {
+    	self.width = w;
+	    self.height = h;
     }
 }
 
