@@ -52,6 +52,10 @@ impl Buffer {
             self.cursor += 1;
         }
     }
+
+    pub fn find_cursor_xy(&self, x: usize, y: usize) -> (usize, usize) {
+        (self.cursor, 0)
+    }
 }
 
 // impl<P: AsRef<Path>> From<P> for Buffer {

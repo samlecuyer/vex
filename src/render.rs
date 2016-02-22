@@ -29,6 +29,8 @@ impl Render for rustbox::RustBox {
             self.print(0, i, rustbox::RB_NORMAL, Color::Default, Color::Default, &formatted);
 	    }
 
+	    let (x, y) = active.find_cursor_xy(h, w);
+	    self.set_cursor(x as isize, y as isize);
         self.present();
     }
 }

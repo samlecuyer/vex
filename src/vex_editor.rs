@@ -10,6 +10,7 @@ pub trait Render {
     fn render(&self, editor: &Editor);
 }
 
+#[derive(PartialEq)]
 pub enum Mode {
     Normal,
     Insert,
@@ -69,6 +70,18 @@ impl Editor {
     	    Key::Ctrl('c') => {
 				self.bufs.remove(0);
 		    }
+            Key::Esc => {
+                self.mode = Mode::Normal;
+            }
+            Key::Char('i') if self.mode == Mode::Normal => {
+                self.mode = Mode::Insert;
+            }
+            Key::Char(c) if self.mode == Mode::Insert => {
+                self.bufs.get_mut(0).unwrap().insert(c);
+            }
+            Key::Enter if self.mode == Mode::Insert => {
+                self.bufs.get_mut(0).unwrap().insert('\n');
+            }
 		    Key::Char('j') => {
 		    	self.top += 1;
 		    }
@@ -93,4 +106,7 @@ impl Editor {
 #[test]
 fn new_editor() {
 	let editor = Editor::new(80, 24);
+
+	assert_eq!(editor.width, 80);
+	assert_eq!(editor.height, 24);
 }
