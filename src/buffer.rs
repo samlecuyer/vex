@@ -63,25 +63,18 @@ impl Buffer {
 
     pub fn insert(&mut self, c: char) {
         // TODO: use encode_utf8 when that's stable
+        let mut idx = self.cursor.absolute;
         for b in  c.to_string().as_bytes()  {
-            self.buf.insert(self.cursor.absolute, *b);
-            self.cursor.absolute += 1;
+            self.buf.insert(idx, *b);
+            idx += 1;
         }
+        self.cursor.absolute = idx;
     }
 
     pub fn find_cursor_xy(&self, x: usize, y: usize) -> (usize, usize) {
         (self.cursor.column, self.cursor.line)
     }
 }
-
-// impl<P: AsRef<Path>> From<P> for Buffer {
-//     fn from(path: P) -> Buffer {
-//         match File::open(path) {
-//             Ok(file) => Buffer::from(file),
-//             Err(_) => Buffer::new()
-//         }
-//     }
-// }
 
 impl<R: Read> From<R> for Buffer {
     fn from(mut reader: R) -> Buffer {

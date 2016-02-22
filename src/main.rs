@@ -11,7 +11,7 @@ use self::rustbox::{RustBox};
 use vex::vex_editor::{Editor};
 
 fn main() {
-	let args: Vec<String> = env::args().collect();
+    let args: Vec<String> = env::args().collect();
     let program = args[0].clone();
 
     let mut opts = Options::new();
@@ -30,7 +30,7 @@ fn main() {
         Result::Err(e) => panic!("{}", e),
     };
 
-	let mut editor = Editor::new(rustbox.width(), rustbox.height());
+    let mut editor = Editor::new(rustbox.width(), rustbox.height());
     if matches.free.is_empty() {
         editor.open_empty();
     } else {
@@ -38,7 +38,7 @@ fn main() {
             editor.open(Path::new(&name));
         }
     }
-	editor.edit(&rustbox);
+    editor.edit(&rustbox);
 }
 
 fn print_usage(program: &str, opts: Options) {
