@@ -15,8 +15,24 @@ enum BufferMode {
     Line,
 }
 
+pub struct Cursor {
+    absolute: usize,
+    line: usize,
+    column: usize,
+}
+
+impl Cursor {
+    fn new(abs: usize) -> Cursor {
+        Cursor{
+            absolute: abs,
+            line: 0,
+            column: 0,
+        }
+    }
+}
+
 pub struct Buffer {
-    cursor: usize,
+    cursor: Cursor,
     mode: BufferMode,
     buf: GapBuffer<u8>,
 }
@@ -24,7 +40,7 @@ pub struct Buffer {
 impl Buffer {
     pub fn new() -> Buffer {
         Buffer {
-            cursor: 0,
+            cursor: Cursor::new(0),
             mode: BufferMode::Line,
             buf: GapBuffer::new()
         }
@@ -48,13 +64,13 @@ impl Buffer {
     pub fn insert(&mut self, c: char) {
         // TODO: use encode_utf8 when that's stable
         for b in  c.to_string().as_bytes()  {
-            self.buf.insert(self.cursor, *b);
-            self.cursor += 1;
+            self.buf.insert(self.cursor.absolute, *b);
+            self.cursor.absolute += 1;
         }
     }
 
     pub fn find_cursor_xy(&self, x: usize, y: usize) -> (usize, usize) {
-        (self.cursor, 0)
+        (self.cursor.column, self.cursor.line)
     }
 }
 
@@ -78,7 +94,7 @@ impl FromIterator<u8> for Buffer {
     fn from_iter<T>(iterator: T) -> Self where T: IntoIterator<Item=u8> {
         let mut buf = GapBuffer::from_iter(iterator);
         Buffer {
-            cursor: 0,
+            cursor: Cursor::new(0),
             mode: BufferMode::Line,
             buf: buf
         }

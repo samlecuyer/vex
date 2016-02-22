@@ -66,31 +66,32 @@ impl Editor {
     }
 
     fn handle_key(&mut self, key: Key) {
-    	match key {
-    	    Key::Ctrl('c') => {
-				self.bufs.remove(0);
-		    }
-            Key::Esc => {
-                self.mode = Mode::Normal;
+    	let cmd = match self.mode {
+            Mode::Insert => InsertMode::handle_key(key),
+            Mode::Normal => NormalMode::handle_key(key),
+        };
+        match cmd {
+            MultiOption::Some(cmd) => {
+                self.do_cmd(cmd);
             }
-            Key::Char('i') if self.mode == Mode::Normal => {
-                self.mode = Mode::Insert;
+            MultiOption::Pending => {}
+            MultiOption::None => {}
+        }
+    }
+
+    fn do_cmd(&mut self, cmd: Command) {
+        match cmd {
+            Command::Quit => {
+                self.bufs.remove(0);
             }
-            Key::Char(c) if self.mode == Mode::Insert => {
-                self.bufs.get_mut(0).unwrap().insert(c);
+            Command::Modal(mode) => {
+                self.mode = mode;
             }
-            Key::Enter if self.mode == Mode::Insert => {
-                self.bufs.get_mut(0).unwrap().insert('\n');
+            Command::Insert(ch) => {
+                self.bufs.get_mut(0).unwrap().insert(ch);
             }
-		    Key::Char('j') => {
-		    	self.top += 1;
-		    }
-		    Key::Char('k') => {
-		    	self.top = self.top.saturating_sub(1);
-		    }
-		    _ => {}
-    	}
-    	
+            _ => {}
+        }
     }
 
     fn is_editing(&self) -> bool {
@@ -110,3 +111,48 @@ fn new_editor() {
 	assert_eq!(editor.width, 80);
 	assert_eq!(editor.height, 24);
 }
+
+enum MultiOption<T> {
+    None,
+    Pending,
+    Some(T),
+}
+enum Command {
+    Insert(char),
+    Modal(Mode),
+    MoveCursor,
+    Quit
+}
+
+trait HandleKey {
+    fn handle_key(key: Key) -> MultiOption<Command>;
+}
+
+#[derive(Debug)]
+struct InsertMode;
+impl HandleKey for InsertMode {
+    fn handle_key(key: Key) -> MultiOption<Command> {
+        match key {
+            Key::Ctrl('c') => MultiOption::Some(Command::Quit),
+            Key::Char(c) => MultiOption::Some(Command::Insert(c)),
+            Key::Enter =>   MultiOption::Some(Command::Insert('\n')),
+            Key::Esc => MultiOption::Some(Command::Modal(Mode::Normal)),
+            _ => MultiOption::None
+        }
+    }
+}
+
+#[derive(Debug)]
+struct NormalMode;
+impl HandleKey for NormalMode {
+    fn handle_key(key: Key) -> MultiOption<Command> {
+        match key {
+            Key::Ctrl('c') => MultiOption::Some(Command::Quit),
+            Key::Char('i') => MultiOption::Some(Command::Modal(Mode::Insert)),
+            Key::Char('j') => MultiOption::Some(Command::MoveCursor),
+            Key::Char('k') => MultiOption::Some(Command::MoveCursor),
+            _ => MultiOption::None
+        }
+    }
+}
+
